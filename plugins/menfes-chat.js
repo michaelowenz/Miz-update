@@ -1,84 +1,39 @@
-async function handler(m, { conn, text, usedPrefix, command, args }) {
-	// Batas
-    let mention = m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : args[0] ? (args[0].replace(/[@ .+-]/g, '') + '@s.whatsapp.net') : ''
-	let txt = (args.length > 1 ? args.slice(1).join(' ') : '') || ''
-	let q = m.quoted ? m.quoted : m
-	let mime = (q.msg || q).mimetype || ''
-	let tujuan = `👋 Saya *${conn.user.name}*, Pesan Untuk Kamu
-👥 Dari : *PENGIRIM RAHASIA*
-
-${htki} 💌 Pesan ${htka}
-${htjava} ${txt}
-`
-	let cap = `${htki} PESAN RAHASIA ${htka}
-Anda Ingin Mengirimkan Pesan ke pacar/sahabat/teman/doi/
-mantan?, tapi Tidak ingin tau siapa Pengirimnya?
-Kamu bisa menggunakan Bot ini
-Contoh Penggunaan: ${usedPrefix + command} ${nomorown} pesan untuknya
-
-Contoh: ${usedPrefix + command} ${nomorown} hai`
-let suks = `Mengirim Pesan *${mime ? mime : 'Teks'}*
-👥 Dari : @${m.sender.replace(/@.+/, '')}
-👥 Untuk : @${mention.replace(/@.+/, '')}
-
-${htki} 💌 Pesan ${htka}
-${htjava} ${txt ? txt : 'Pesan Kosong'}
-`
-    // Batas
-    command = command.toLowerCase()
-    this.menfes = this.menfes ? this.menfes : {}
-    switch (command) {
-        case 'menfesleave': {
-            let room = Object.values(this.menfes).find(room => room.check(m.sender))
-            if (!room) return this.sendButton(m.chat, '*Kamu tidak sedang berada di menfes chat*', author, null, [['Mulai Menfes', '.menfesstart']], null)
-            m.reply('Sukses Hapus Menfes')
-            let other = room.other(m.sender)
-            if (other) await this.sendButton(other, room.b + ' *Meninggalkan chat*', author, null, [['Mulai Menfes', '.menfesstart']], null)
-            delete this.menfes[room.id]
-            if (command === 'menfesleave') break
-        }
-        case 'menfesstart': {
-            if (Object.values(this.menfes).find(room => room.check(m.sender))) return this.sendButton(m.chat, '*Kamu masih berada di dalam menfes chat, menunggu Balasan*', author, null, [['Hapus Menfes', '.menfesleave']], null)
-            let room = Object.values(this.menfes).find(room => room.state === 'WAITING' && !room.check(m.sender))
-            if (room) {
-                room.b = m.sender
-                room.state = 'CHATTING'
-                await this.sendButton(room.a, '*Menfes Chat Tersambung!*\nDengan: ' + m.sender, author, null, [['Hapus Menfes', '.menfesleave']], null)
-                await this.sendButton(m.sender, '*Menfes Chat Tersambung!*\nDengan: ' + room.a, author, null, [['Hapus Menfes', '.menfesleave']], null)
-            } else {
-            // Batas
-	if (!m.quoted) {
-		await conn.sendButton(mention, tujuan, cap, null, [['B A L A S', '.menfesstart']], null)
-	} else {
-		await conn.sendButton(mention, tujuan, cap, null, [['B A L A S', '.menfesstart']], null)
-		let media = q ? await m.getQuotedObj() : false || m
-		await conn.copyNForward(mention, media, false).catch(_ => _)
-	}
-	await conn.sendButton(m.chat, suks, wm, null, [['Tes Bot', 'tes']], m, { mentions: conn.parseMention(suks) })
-            // Batas
-                let id = + new Date
-                this.menfes[id] = {
-                    id,
-                    a: m.sender,
-                    b: '',
-                    state: 'WAITING',
-                    check: function (who = '') {
-                        return [this.a, this.b].includes(who)
-                    },
-                    other: function (who = '') {
-                        return who === this.a ? this.b : who === this.b ? this.a : ''
-                    },
-                }
-                await this.sendButton(m.chat, '*Menunggu Balasan...*', author, null, [['Hapus Menfes', '.menfesleave']], null)
+let handler = async (m, { conn, text, usedPrefix, command }) => {
+    conn.menfess = conn.menfess ? conn.menfess : {}
+    if (!text) throw `*Cara penggunaan :*\n\n${usedPrefix + command} nomor|nama pengirim|pesan\n\n*Note:* nama pengirim boleh nama samaran atau anonymous.\n\n*Contoh:* ${usedPrefix + command} ${m.sender.split`@`[0]}|Anonymous|Hai.`;
+    let [jid, name, pesan] = text.split('|');
+    if ((!jid || !name || !pesan)) throw `*Cara penggunaan :*\n\n${usedPrefix + command} nomor|nama pengirim|pesan\n\n*Note:* nama pengirim boleh nama samaran atau anonymous.\n\n*Contoh:* ${usedPrefix + command} ${m.sender.split`@`[0]}|Anonymous|Hai.`;
+    jid = jid.replace(/[^0-9]/g, '') + '@s.whatsapp.net';
+    let data = (await conn.onWhatsApp(jid))[0] || {};
+    if (!data.exists) throw 'Nomer tidak terdaftar di whatsapp.';
+    if (jid == m.sender) throw 'tidak bisa mengirim pesan menfess ke diri sendiri.'
+    let mf = Object.values(conn.menfess).find(mf => mf.status === true)
+    if (mf) return !0
+    try {
+    	let id = + new Date
+        let tek = `Hai @${data.jid.split('@')[0]}, kamu menerima pesan Menfess nih.\n\nDari: *${name}*\nPesan: \n${pesan}\n\nMau balas pesan ini kak? bisa kok kak. tinggal ketik pesan kakak lalu kirim, nanti saya sampaikan ke *${name}*.`.trim();
+        let imgr = flaaa.getRandom()
+        await conn.sendButton(data.jid, bottime, tek, `${imgr + 'Menfess'}`, [['BALAS PESAN', '.balasmenfess']], fakes)
+        .then(() => {
+            m.reply('Berhasil mengirim pesan menfess.')
+            conn.menfess[id] = {
+                id,
+                dari: m.sender,
+                nama: name,
+                penerima: data.jid,
+                pesan: pesan,
+                status: false
             }
-            break
-        }
+            return !0
+        })
+    } catch (e) {
+        console.log(e)
+        m.reply('eror');
     }
 }
-handler.help = ['menfesstart', 'menfesleave']
-handler.tags = ['menfes']
-handler.command = ['menfesstart', 'menfesleave']
-
+handler.tags = ['main']
+handler.help = ['menfess', 'menfes'].map(v => v + ' <nomor|nama pengirim|pesan>')
+handler.command = /^(menfess|menfes)$/i
 handler.private = true
 
 export default handler
