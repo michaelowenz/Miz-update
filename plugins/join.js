@@ -1,36 +1,21 @@
-import fs from 'fs'
-import { randomBytes } from 'crypto'
-
 let linkRegex = /chat.whatsapp.com\/([0-9A-Za-z]{20,24})( [0-9]{1,3})?/i
 
-let handler = async (m, { conn, text, usedPrefix, command, isOwner, args }) => {
-let chat = global.db.data.chats[m.chat]
-let imgr = flaaa.getRandom()
-let [_, code, expired] = text.match(linkRegex) || []
-    if (!code) throw `*Example:* ${usedPrefix + command} ${sgc}`
-    
+let handler = async (m, { conn, text, isOwner }) => {
+    let [_, code, expired] = text.match(linkRegex) || []
+    if (!code) throw 'Link invalid'
     let res = await conn.groupAcceptInvite(code)
-    if (!res) throw res.toString()
-    let name = await conn.getName(res).catch(_ => null)
-    let caption = `${dmenut} Sukses Join Di Grup
-    ${dmenub} ${name || res}
-    ${dmenub} *Jangan lupa baca rules ngap!*
-    ${dmenuf}
-    `
-    await conn.sendButton(m.chat, caption, wm, imgr + 'join', [
-                ['Rules', `${usedPrefix}rules`]
-            ], m, adReply)
-            
-  if (chat.bcjoin) {
-  let chats = Object.entries(conn.chats).filter(([_, chat]) => chat.isChats).map(v => v[0])
-  let cc = conn.serializeM(text ? m : m.quoted ? await m.getQuotedObj() : false || m)
-  let teks = text ? text : cc.text
-  conn.reply(m.chat, `Membagikan Link Grup Kamu ke ${chats.length} chat`, m)
-  for (let id of chats) {
-  await conn.sendHydrated(id, "*「 New Group 」* \n\n" + text, wm, imgr + 'New Group', text, 'LINK GROUP', null, null, [[null, null]], m)
+    expired = Math.floor(Math.min(999, Math.max(1, isOwner ? isNumber(expired) ? parseInt(expired) : 0 : 3)))
+    m.reply(`Berhasil join grup ${res}${expired ? ` selama ${expired} hari` : ''}`)
+    let chats = global.db.data.chats[res]
+    if (!chats) chats = global.db.data.chats[res] = {}
+    if (expired) chats.expired = +new Date() + expired * 1000 * 60 * 60 * 24
 }
-}
+handler.help = ['join <chat.whatsapp.com>']
+handler.tags = ['owner']
 
-}
 handler.command = /^join$/i
+handler.rowner = true
+
 export default handler
+
+const isNumber = (x) => (x = parseInt(x), typeof x === 'number' && !isNaN(x))
